@@ -2,8 +2,8 @@ class TiConstants {
   //static String webServiceUrl ="http://cms.indianrail.gov.in/cmswebservicejar/master/";
   //static String webServiceUrl ="https://cms.indianrail.gov.in/CMSWEBSERVICE/master/";
   static String webServiceUrl = "https://www.foistest.indianrail.gov.in:443/TiWebsrvc/resources/ti/";
- // static String webServiceUrl =
- //    "http://172.16.4.58:7101/TIWebService-TrafficInspectionRest-context-root/resources/TiAppService/";
+  //static String webServiceUrl =
+  //  "http://172.16.4.58:7101/TIWebService-TrafficInspectionRest-context-root/resources/TiAppService/";
 
  // static String webServiceUrl ="http://10.60.201.196:50010/TiWebsrvc/resources/ti/";
   //static String webServiceUrl = "http://172.16.25.45:9081/CMSWEBSERVICE/master/";

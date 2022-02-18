@@ -9,7 +9,7 @@ import 'dart:typed_data';
 import 'package:ti/commonutils/ti_constants.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/sttnInspDtlsList.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter/material.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/safety_circular_bulletin_Model.dart';
@@ -23,7 +23,10 @@ class SafetyCircularBulletin extends StatefulWidget {
 
 class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
   File imageFile = null ;
-
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   List<String> selectedItemValue = [];
 
   List<bool> showText;
@@ -35,6 +38,7 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -69,6 +73,10 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
             jsonResult['ynList1'][1].toString() == 'NO' ? true : false,
@@ -120,12 +128,12 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
       showText = await [false, false, false, false];
 
       safetyCircularMod = await new SafetyCircularBulletinModel(
-          SttnInspDtlsList.getSafetyCircularList(), ['YES', 'YES', 'YES', 'YES'],
+          SttnInspDtlsList.getSafetyCircularList(), ['SELECT', 'SELECT', 'SELECT', 'SELECT'],
           ['', '', '', ''],
           '');
 
       for (int i = 0; i < 4; i++){
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
       }
 
       for (int i = 0; i < 4; i++) whyNocontroller.add(TextEditingController());
@@ -206,34 +214,51 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
-
-            String base64Image = null ;
-
-            if (imageFile != null) {
-              base64Image = base64Encode(imageFile.readAsBytesSync());
-            //print
-            String fileName = imageFile.path.split("/").last;
-            log.d("fileName:" + fileName); }
-
-            safetyCircularMod.base64Image = base64Image;
-
-            safetyCircularMod.inspID = TiUtilities.inspmstr.inspid;
-
-            if (_formKey.currentState.validate()) {
-              TiUtilities.callSttnInspEntryWebService(context, json.encode(safetyCircularMod.toJson()), "saveSaftyCrclrRgtr").then((res) {
-                if (res == 'Record Successfully Saved.') {
-                  print('Record Successfully Saved.');
-                  TiUtilities.showOKDialog(context, "Success!!")
-                      .then((res1) {
-                    Navigator.pushNamed(context, '/First_Aid_Box_Stret');
-                  });
-                } else {
-                  print('Problem in Sign On. Please Contact to Supervisor');
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < safetyCircularMod.ynList1.length ; i++){
+                if(safetyCircularMod.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
                 }
-              });
-            }
-          },
+                else
+                  safetyCircularMod.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else {
+                String base64Image = null;
+
+                if (imageFile != null) {
+                  base64Image = base64Encode(imageFile.readAsBytesSync());
+                  //print
+                  String fileName = imageFile.path
+                      .split("/")
+                      .last;
+                  log.d("fileName:" + fileName);
+                }
+
+                safetyCircularMod.base64Image = base64Image;
+
+                safetyCircularMod.inspID = TiUtilities.inspmstr.inspid;
+
+                if (_formKey.currentState.validate()) {
+                  TiUtilities.callSttnInspEntryWebService(
+                      context, json.encode(safetyCircularMod.toJson()),
+                      "saveSaftyCrclrRgtr").then((res) {
+                    if (res == 'Record Successfully Saved.') {
+                      print('Record Successfully Saved.');
+                      TiUtilities.showOKDialog(context, "Success!!")
+                          .then((res1) {
+                        Navigator.pushNamed(context, '/First_Aid_Box_Stret');
+                      });
+                    } else {
+                      print('Problem in Sign On. Please Contact to Supervisor');
+                    }
+                  });
+                }
+              } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -278,15 +303,18 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [ SizedBox(
           height: 2.0,
         ),
-        Padding(
+      Expanded(
+          child:Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                   controller: rmrkController,
-                  inputFormatters: [
+                                      maxLength: 100,                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                   ],
                   decoration: InputDecoration(
@@ -306,8 +334,14 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
                   onChanged: (val) {
                     safetyCircularMod.rmrks1 = val;
                     //print('safetyCircularMod.rmrks1:' + safetyCircularMod.rmrks1);
-                  })),
-        ),
+    })),
+    )),
+    new IconButton(
+    onPressed: _listen,
+    icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+    color: Colors.black)),
+    ],
+    ),
         SizedBox(height: 10.0),
         Center(
           child: CameraCls(
@@ -318,7 +352,30 @@ class _SafetyCircularBulletinState extends State<SafetyCircularBulletin> {
       ],
     );
   }
-
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            safetyCircularMod.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
   Future<String> _callSaveSafetyCircularBulletinWebService(
       SafetyCircularBulletinModel cautOrdReg) async {
     //log.d(alpa);

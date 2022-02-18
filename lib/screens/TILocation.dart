@@ -1,10 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/TILocationModel.dart';
-//import 'package:fois_mobileapp/Pages/home.dart';
-//import
-import 'package:ti/model/SttnInspModels/cautionOrdRegModel.dart';
-
 import 'package:ti/commonutils/ti_constants.dart';
 import 'package:ti/commonutils/size_config.dart';
 
@@ -35,21 +32,42 @@ class TILocation extends StatefulWidget {
 
 class _TILocationState extends State<TILocation> {
 
+  final GlobalKey<State> _keyLoader = GlobalKey<State>();
+
   Position _location = Position(latitude: 0.0, longitude: 0.0);
 
   String _error;
   static final log = getLogger('StationLocationSetting');
 
-  Future<void> _getLocation() async {
+  @override
+  void initState() {
+
+    super.initState();
+    setState(() {
+
+     // _getLocation();
+
+    });
+
+  }
+
+    Future<void> _getLocation() async {
+
+    print("After init");
+
+    TiUtilities.showLoadingIndicator(context, "Please wait");
 
     try {
-      final Position _locationResult = await TiUtilities.getUserGeoPosition();
+      Position _locationResult =  await TiUtilities.getUserGeoPosition();
 
-      setState(() {
+       setState(() {
         _location = _locationResult;
         print("in setstate" + _locationResult.toString());
+
       });
 
+     if(!(_locationResult == Position(latitude: 0.0, longitude: 0.0)))
+     {
       if (closestLobbyList == null || closestLobbyList.length == 0) {
         log.d('Fetching from service getClosestLobby');
         var jsonResult;
@@ -61,16 +79,19 @@ class _TILocationState extends State<TILocation> {
         };
         String urlInputString = json.encode(urlinput);
         //var url = TiConstants.webServiceUrl + 'getClosestLobby';
-        var url= TiConstants.webServiceUrl +'GetGPSLocn';
+        var url = TiConstants.webServiceUrl + 'GetGPSLocn';
         //var url = "http://172.16.4.58:7101/TIWebService-TrafficInspectionRest-context-root/resources/TiAppService/GetGPSLocn";
 
         log.d("url = " + url);
         log.d("urlInputString = " + urlInputString);
 
+
         final response = await http.post(Uri.parse(url),
             headers: TiConstants.headerInput,
             body: urlInputString,
             encoding: Encoding.getByName("utf-8"));
+
+        Navigator.of(context).pop();
 
         try {
           print("After postReq2:" + response.body.toString());
@@ -99,6 +120,7 @@ class _TILocationState extends State<TILocation> {
           print("Myexcetion" + e.toString());
         }
       }
+    }
 
       setState(() {
         _location = _locationResult;
@@ -153,7 +175,8 @@ class _TILocationState extends State<TILocation> {
                         title: ConstrainedBox(
                           constraints:  BoxConstraints.tightFor(),
                           child: ElevatedButton(
-                                child: const Text('Get Loc'),
+                                child: const Text('Get Loc',
+                                style: TextStyle(fontSize: 11),),
                                 onPressed: _getLocation,
 
                             ),
@@ -163,53 +186,48 @@ class _TILocationState extends State<TILocation> {
                             width: (SizeConfig.screenWidth) * 5/9,
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
-                              child: Text('${_location.toString()}'),
+                              child: Text('${_location.toString()}',
+                                style: TextStyle(fontSize: 10)),
                             )),
                       ),
                       ListTile(
                         //title: Text(''),
                         title:Padding(
                           padding: const EdgeInsets.all(0.0),
-                          child: ConstrainedBox(
-                            constraints: new BoxConstraints(
-                              minHeight: 60.0,
-                              minWidth: SizeConfig.screenWidth,
-                              maxHeight: (SizeConfig.screenHeight)/10,
-                              maxWidth: SizeConfig.screenWidth,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                    enabledBorder: const OutlineInputBorder(
-                                      // width: 0.0 produces a thin "hairline" border
-                                      borderSide: const BorderSide(color: Colors.teal),
-                                    ),
-                                    border: OutlineInputBorder()),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    isExpanded: true,
-                                    value: selectedGPS,
-                                    items: closestLobbyList.map((String dropDownStringItem) {
-                                      return DropdownMenuItem<String>(
-                                          value: dropDownStringItem,
-                                          child: Text(dropDownStringItem,
-                                              style: TextStyle(
-                                                  fontSize: 14
-                                              )
-                                          ));
-                                    }).toList(),
-                                    onChanged: (newSelectedValue) {
-                                      setState(() {
-                                        selectedGPS = newSelectedValue;
-                                        this.TILocMod.GPSLoc =
-                                            newSelectedValue.toString();
-                                        print("TILocMod.GPSLoc:" +
-                                            TILocMod.GPSLoc);
-                                      });
-                                    },
+                          child: SizedBox(
 
+                            height: (SizeConfig.screenHeight)/10,
+
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                  enabledBorder: const OutlineInputBorder(
+                                    // width: 0.0 produces a thin "hairline" border
+                                    borderSide: const BorderSide(color: Colors.teal),
                                   ),
+                                  border: OutlineInputBorder()),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: selectedGPS,
+                                  items: closestLobbyList.map((String dropDownStringItem) {
+                                    return DropdownMenuItem<String>(
+                                        value: dropDownStringItem,
+                                        child: Text(dropDownStringItem,
+                                            style: TextStyle(
+                                                  fontSize: 8
+                                            )
+                                        ));
+                                  }).toList(),
+                                  onChanged: (newSelectedValue) {
+                                    setState(() {
+                                      selectedGPS = newSelectedValue;
+                                      this.TILocMod.GPSLoc =
+                                          newSelectedValue.toString();
+                                      print("TILocMod.GPSLoc:" +
+                                          TILocMod.GPSLoc);
+                                    });
+                                  },
+
                                 ),
                               ),
                             ),
@@ -233,7 +251,8 @@ class _TILocationState extends State<TILocation> {
                       },
                       title:   Text('User Location :',
                           style: TextStyle(
-                              fontSize: 18
+                              fontSize: 11,
+                            fontWeight: FontWeight.bold
                           )),
                       trailing:  SizedBox(
                         width: (SizeConfig.screenWidth) * 5/9,
@@ -283,7 +302,8 @@ class _TILocationState extends State<TILocation> {
                  child: ListTile(
                       title:   Text('Inspection Subtype :',
                           style: TextStyle(
-                              fontSize: 18
+                              fontSize: 11,
+                               fontWeight: FontWeight.bold
                           )),
                       trailing:  SizedBox(
                         width: (SizeConfig.screenWidth) * 5/9,
@@ -304,7 +324,7 @@ class _TILocationState extends State<TILocation> {
                                       value: dropDownStringItem,
                                       child: Text(dropDownStringItem,
                                           style: TextStyle(
-                                              fontSize: 14
+                                              fontSize: 11
                                           )
                                       ));
                                 }).toList(),

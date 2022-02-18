@@ -9,7 +9,7 @@ import 'package:ti/commonutils/ti_utilities.dart';
 import 'dart:convert';
 import 'package:ti/model/SttnInspModels/TrnSgnlFailureModel.dart';
 import 'package:ti/model/SttnInspModels/sttnInspDtlsList.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'Trn_sgnl_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
@@ -28,7 +28,10 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
   final items = ['Serial', 'Non-Serial'];
   //var show = false ;
   File imageFile = null ;
-
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   List<String> selectedItemValue = [];
 
   List<bool> showText;
@@ -40,6 +43,7 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -75,6 +79,10 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
                              jsonResult['ynList1'][1].toString() == 'NO' ? true : false,
@@ -139,12 +147,12 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
       showText = await [false, false, false];
 
       trnSgnlFailureModel = await new TrnSgnlFailureModel(
-          SttnInspDtlsList.getTrnSgnlFailList(), ['YES', 'YES','YES'],
+          SttnInspDtlsList.getTrnSgnlFailList(), ['SELECT', 'SELECT','SELECT'],
           ['', '',''],
           '');
-      selectedItemValue.add("YES");
-      selectedItemValue.add("YES");
-      selectedItemValue.add("YES");
+      selectedItemValue.add("SELECT");
+      selectedItemValue.add("SELECT");
+      selectedItemValue.add("SELECT");
 
       for (int i = 0; i < 3; i++) whyNocontroller.add(TextEditingController());
       whyNocontroller[0].text = '';
@@ -222,35 +230,52 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
-
-            String base64Image = null ;
-
-            if (imageFile != null) {
-              base64Image = base64Encode(imageFile.readAsBytesSync());
-            //print
-            String fileName = imageFile.path.split("/").last;
-            log.d("fileName:" + fileName); }
-
-            trnSgnlFailureModel.base64Image = base64Image;
-
-            trnSgnlFailureModel.inspID = TiUtilities.inspmstr.inspid;
-
-            if (_formKey.currentState.validate()) {
-              TiUtilities.callSttnInspEntryWebService(context, json.encode(trnSgnlFailureModel.toJson()), "savetrnsgnlfailure").then((res) {
-                if (res == 'Record Successfully Saved.') {
-                  print('Record Successfully Saved.');
-                  TiUtilities.showOKDialog(context, "Success!!")
-                      .then((res1) {
-                    Navigator.pushNamed(context, '/sgnl_failure');
-                  });
-                } else {
-                  print(
-                      'Problem in Sign On. Please Contact to Supervisor');
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < trnSgnlFailureModel.ynList1.length ; i++){
+                if(trnSgnlFailureModel.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
                 }
-              });
-            }
-          },
+                else
+                  trnSgnlFailureModel.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else {
+                String base64Image = null;
+
+                if (imageFile != null) {
+                  base64Image = base64Encode(imageFile.readAsBytesSync());
+                  //print
+                  String fileName = imageFile.path
+                      .split("/")
+                      .last;
+                  log.d("fileName:" + fileName);
+                }
+
+                trnSgnlFailureModel.base64Image = base64Image;
+
+                trnSgnlFailureModel.inspID = TiUtilities.inspmstr.inspid;
+
+                if (_formKey.currentState.validate()) {
+                  TiUtilities.callSttnInspEntryWebService(
+                      context, json.encode(trnSgnlFailureModel.toJson()),
+                      "savetrnsgnlfailure").then((res) {
+                    if (res == 'Record Successfully Saved.') {
+                      print('Record Successfully Saved.');
+                      TiUtilities.showOKDialog(context, "Success!!")
+                          .then((res1) {
+                        Navigator.pushNamed(context, '/sgnl_failure');
+                      });
+                    } else {
+                      print(
+                          'Problem in Sign On. Please Contact to Supervisor');
+                    }
+                  });
+                }
+              } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -428,15 +453,18 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [  SizedBox(
           height: 2.0,
         ),
-        Padding(
+      Expanded(
+          child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                 controller: rmrkController,
-                inputFormatters: [
+                                                                            maxLength: 100,                inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                 ],
                 decoration: InputDecoration(
@@ -456,10 +484,14 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
                 onChanged: (val){
                   trnSgnlFailureModel.rmrks1 = val;
                   //print('TrnSgnlFailureMod.rmrks1:' + TrnSgnlFailureMod.rmrks1);
-                }
-
-              )),
-        ),
+    })),
+    )),
+    new IconButton(
+    onPressed: _listen,
+    icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+    color: Colors.black)),
+    ],
+    ),
 
         SizedBox(height: 10.0),
         Center(
@@ -588,7 +620,30 @@ class _TrnSgnlFailureState extends State<TrnSgnlFailure> {
       ],
     );
   }
-
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            trnSgnlFailureModel.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
   Future<String> _callSaveTrnSgnlFailureWebService(
       TrnSgnlFailureModel trnsgnlfailure) async {
     //log.d(alpa);

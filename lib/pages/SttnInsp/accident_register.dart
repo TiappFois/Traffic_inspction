@@ -73,6 +73,10 @@ class _AccidentRegisterState extends State<AccidentRegister> {
         if (response.statusCode == 200) {
           print("Response200");
 
+          for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
+
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
             jsonResult['ynList1'][1].toString() == 'NO' ? true : false,
             jsonResult['ynList1'][2].toString() == 'NO' ? true : false];
@@ -102,10 +106,10 @@ class _AccidentRegisterState extends State<AccidentRegister> {
           if(jsonResult['base64Image']!= null && jsonResult['base64Image'].toString() != '') {
 
             Uint8List bytes = base64.decode(jsonResult['base64Image']);
-          String dir = (await getApplicationDocumentsDirectory()).path;
-          imageFile = File(
-              "$dir/" + DateTime.now().millisecondsSinceEpoch.toString() + ".png");
-          await imageFile.writeAsBytes(bytes); }
+            String dir = (await getApplicationDocumentsDirectory()).path;
+            imageFile = File(
+                "$dir/" + DateTime.now().millisecondsSinceEpoch.toString() + ".png");
+            await imageFile.writeAsBytes(bytes); }
 
           print("imageFile" );
 
@@ -124,12 +128,12 @@ class _AccidentRegisterState extends State<AccidentRegister> {
       showText = await [false, false, false];
 
       accidentregMod = await new AccidentRegisterModel(
-          SttnInspDtlsList.getAcciList(), ['YES', 'YES','YES'],
+          SttnInspDtlsList.getAcciList(), ['SELECT', 'SELECT','SELECT'],
           ['', '',''],
           '');
 
       for (int i = 0; i < 3; i++){
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
       }
 
       for (int i = 0; i < 3; i++) whyNocontroller.add(TextEditingController());
@@ -186,24 +190,24 @@ class _AccidentRegisterState extends State<AccidentRegister> {
         key: _scaffoldkey,
         appBar: TiUtilities.tiAppBar(context, "Accident Register"),
         body: Builder(
-          builder: (context) {
-                if (gettingData == 0) {
+            builder: (context) {
+              if (gettingData == 0) {
                 return Container(
-                    child: Center(
+                  child: Center(
                     child: Text('Loading....'),
-                ),
+                  ),
                 );
-       } else {
-        return new SingleChildScrollView(
-        reverse: true,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.always,
-          child: FormUI(context),
-        ),
-       );
-      }
-          }
+              } else {
+                return new SingleChildScrollView(
+                  reverse: true,
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.always,
+                    child: FormUI(context),
+                  ),
+                );
+              }
+            }
         ),
 
         bottomNavigationBar: TiUtilities.tiBottomNaviBar(context, "/staff_grv_reg"),
@@ -212,39 +216,53 @@ class _AccidentRegisterState extends State<AccidentRegister> {
         floatingActionButton: FloatingActionButton.extended(
 
           onPressed: () async {
+            int selectedCount = 0 ;
+            for(var i = 0 ; i < accidentregMod.ynList1.length ; i++){
+              if(accidentregMod.ynList1[i] != "SELECT"){
+                selectedCount = 1 ;
+              }
+              else
+                accidentregMod.ynList1[i] = '';
 
-          accidentregMod.inspID = TiUtilities.inspmstr.inspid;
+            }
+            if(selectedCount == 0){
+              TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+            }
+            else{
 
-            String base64Image = null ;
+              accidentregMod.inspID = TiUtilities.inspmstr.inspid;
 
-            if (imageFile != null) {
-              base64Image = base64Encode(imageFile.readAsBytesSync());
-            //print
-            String fileName = imageFile.path.split("/").last;
-            log.d("fileName:" + fileName); }
+              String base64Image = null ;
 
-            accidentregMod.base64Image = base64Image;
+              if (imageFile != null) {
+                base64Image = base64Encode(imageFile.readAsBytesSync());
+                //print
+                String fileName = imageFile.path.split("/").last;
+                log.d("fileName:" + fileName); }
 
-            if (_formKey.currentState.validate()) {
-              TiUtilities.callSttnInspEntryWebService(context, json.encode(accidentregMod.toJson()), "saveAccidentRgtr").then((res) {
-                if (res == 'Record Successfully Saved.') {
-                  print('Record Successfully Saved.');
-                  TiUtilities.showOKDialog(context, "Success!!")
-                      .then((res1) {
-                    Navigator.pushNamed(context, '/staff_grv_reg');
-                  });
-                } else {
-                  print('Problem in Sign On. Please Contact to Supervisor');
-                }
-              });
+              accidentregMod.base64Image = base64Image;
+
+              if (_formKey.currentState.validate()) {
+                TiUtilities.callSttnInspEntryWebService(context, json.encode(accidentregMod.toJson()), "saveAccidentRgtr").then((res) {
+                  if (res == 'Record Successfully Saved.') {
+                    print('Record Successfully Saved.');
+                    TiUtilities.showOKDialog(context, "Success!!")
+                        .then((res1) {
+                      Navigator.pushNamed(context, '/staff_grv_reg');
+                    });
+                  } else {
+                    print('Problem in Sign On. Please Contact to Supervisor');
+                  }
+                });
+              }
             }
           },
           icon: Icon(Icons.save_outlined,
-                     color: Colors.teal,
+            color: Colors.teal,
           ),
           label: Text('Save & Next',
             style: TextStyle(
-              color: Colors.teal
+                color: Colors.teal
             ),
           ),
           backgroundColor: Colors.lime,
@@ -292,9 +310,11 @@ class _AccidentRegisterState extends State<AccidentRegister> {
           child: Container(
               child: TextFormField(
                   controller: rmrkController,
+                  maxLength: 100,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                   ],
+
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Remarks(if any)',

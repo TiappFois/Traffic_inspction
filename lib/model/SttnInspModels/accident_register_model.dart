@@ -13,7 +13,7 @@ class AccidentRegisterModel {
   AccidentRegisterModel(this.sList1,this.ynList1, this.whyNoRsn,this.rmrks1);
 
   Map<String, dynamic> toJson() => { "status" : status,
-"sList1" : sList1,
+    "sList1" : sList1,
     "ynList1": ynList1,
     "whyNoRsn":whyNoRsn,
     "rmrks1": rmrks1,

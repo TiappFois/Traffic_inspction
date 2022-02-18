@@ -1,7 +1,7 @@
 import 'package:provider/src/provider.dart';
 import 'package:ti/LanguageChangeProvider.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
-import 'package:ti/commonutils/navigation_menue.dart';
+import 'package:ti/commonutils/navigation_menu.dart';
 import 'package:ti/generated/l10n.dart';
 import 'package:ti/screens/apphome_screen.dart';
 import 'package:ti/screens/login_page.dart';
@@ -50,11 +50,12 @@ class _AppHomeState extends State<AppHome> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                 // 'यातायात निरीक्षक (TI)',
-                  S.of(context).welcome,
+                  'यातायात निरीक्षक(TI)',
+                  //S.of(context).welcome,
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+
                   ),
                 ),
                 Container(
@@ -74,7 +75,7 @@ class _AppHomeState extends State<AppHome> {
                         onPressed: (){
                           context.read<LanguageChangeProvider>().changeLocale('en');
                         },
-                        child: Text('English'),
+                        child: Text('Eng'),
                         style: ButtonStyle(
                           backgroundColor: MaterialStateProperty.all<Color>(Colors.indigoAccent),
                         ),

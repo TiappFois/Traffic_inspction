@@ -1,8 +1,9 @@
+import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 import 'package:ti/commonutils/logger.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 
-import 'package:ti/commonutils/navigation_menue.dart';
+import 'package:ti/commonutils/navigation_menu.dart';
 import 'package:ti/commonutils/size_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,6 +59,7 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
         print("Insp Count:" + CheckInspMstrModelResult.inspcont);
         CheckInspMstrResult2 = CheckInspMstrModelResult.inspcont;
         existingInspListdata = CheckInspMstrModelResult;
+
         for (int i =0 ; i < int.parse(CheckInspMstrModelResult.inspcont) ; i++){
           _isBlinkVisible[i] = true;
         }
@@ -79,6 +81,8 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
           setState(() {});
         });
         controller.forward();
+
+        setState(() {});
       }
       else{
         TiUtilities.showOKDialog(context, "Some Issue in retrieving information");
@@ -118,8 +122,9 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
         },
         child: Scaffold(
           key: _userHomeScaffoldKey,
+          appBar: AppBar(title: Text("UserHome"),),
           resizeToAvoidBottomInset: false,
-
+          drawer: NavigationMenue.navigationdrawerForUserHome(context),
           body: ListView(
             children: <Widget>[
               //  if (TiUtilities.user.roleid == 'TI')
@@ -148,7 +153,196 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
             children: <Widget>[
                // Always visible
               if (_isBlinkVisible[0])
-                InkWell (
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      color: animation.value,
+                      onPressed: (){
+                    InspMstrModel inspmstr;
+                    inspmstr = InspMstrModel(
+                      true,
+                      existingInspListdata.inspIDs[0].toString(),
+                      existingInspListdata.userid.toString(),
+                      existingInspListdata.examtype[0].toString(),
+                      existingInspListdata.startDates[0].toString(),
+                      '',
+                      existingInspListdata.gpslocations[0].toString(),
+                      '',
+                      existingInspListdata.locations[0].toString(),
+                      '',
+                      '',
+                      '',
+                      'EXIST',
+                      existingInspListdata.cinsplist[0].toString(),
+                      existingInspListdata.inspcont.toString()
+                  );
+                   TiUtilities.setInspMstr(inspmstr);
+                   TiUtilities.pushPage(context, () => SttnInspection());
+                  },
+                      child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[0] + ' at location : ' + existingInspListdata.locations[0] + ' is still Pending !!',
+                      style: TextStyle(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10
+                      ),),
+                  )
+                  ),
+                ),
+              if (_isBlinkVisible[1])
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      color: animation.value,
+                      onPressed: (){
+                        InspMstrModel inspmstr;
+                        inspmstr = InspMstrModel(
+                            true,
+                            existingInspListdata.inspIDs[1].toString(),
+                            existingInspListdata.userid.toString(),
+                            existingInspListdata.examtype[1].toString(),
+                            existingInspListdata.startDates[1].toString(),
+                            '',
+                            existingInspListdata.gpslocations[1].toString(),
+                            '',
+                            existingInspListdata.locations[1].toString(),
+                            '',
+                            '',
+                            '',
+                            'EXIST',
+                            existingInspListdata.cinsplist[1].toString(),
+                            existingInspListdata.inspcont.toString()
+                        );
+                        TiUtilities.setInspMstr(inspmstr);
+                        TiUtilities.pushPage(context, () => SttnInspection());
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[1] + ' at location : ' + existingInspListdata.locations[1] + ' is still Pending !!',
+                          style: TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10
+                          ),),
+                      )
+                  ),
+                ),
+              if (_isBlinkVisible[2])
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      color: animation.value,
+                      onPressed: (){
+                        InspMstrModel inspmstr;
+                        inspmstr = InspMstrModel(
+                            true,
+                            existingInspListdata.inspIDs[2].toString(),
+                            existingInspListdata.userid.toString(),
+                            existingInspListdata.examtype[2].toString(),
+                            existingInspListdata.startDates[2].toString(),
+                            '',
+                            existingInspListdata.gpslocations[2].toString(),
+                            '',
+                            existingInspListdata.locations[2].toString(),
+                            '',
+                            '',
+                            '',
+                            'EXIST',
+                            existingInspListdata.cinsplist[2].toString(),
+                            existingInspListdata.inspcont.toString()
+                        );
+                        TiUtilities.setInspMstr(inspmstr);
+                        TiUtilities.pushPage(context, () => SttnInspection());
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[2] + ' at location : ' + existingInspListdata.locations[2] + ' is still Pending !!',
+                          style: TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10
+                          ),),
+                      )
+                  ),
+                ),
+              if (_isBlinkVisible[3])
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      color: animation.value,
+                      onPressed: (){
+                        InspMstrModel inspmstr;
+                        inspmstr = InspMstrModel(
+                            true,
+                            existingInspListdata.inspIDs[3].toString(),
+                            existingInspListdata.userid.toString(),
+                            existingInspListdata.examtype[3].toString(),
+                            existingInspListdata.startDates[3].toString(),
+                            '',
+                            existingInspListdata.gpslocations[3].toString(),
+                            '',
+                            existingInspListdata.locations[3].toString(),
+                            '',
+                            '',
+                            '',
+                            'EXIST',
+                            existingInspListdata.cinsplist[3].toString(),
+                            existingInspListdata.inspcont.toString()
+                        );
+                        TiUtilities.setInspMstr(inspmstr);
+                        TiUtilities.pushPage(context, () => SttnInspection());
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[3] + ' at location : ' + existingInspListdata.locations[3] + ' is still Pending !!',
+                          style: TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10
+                          ),),
+                      )
+                  ),
+                ),
+              if (_isBlinkVisible[4])
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      color: animation.value,
+                      onPressed: (){
+                        InspMstrModel inspmstr;
+                        inspmstr = InspMstrModel(
+                            true,
+                            existingInspListdata.inspIDs[4].toString(),
+                            existingInspListdata.userid.toString(),
+                            existingInspListdata.examtype[4].toString(),
+                            existingInspListdata.startDates[4].toString(),
+                            '',
+                            existingInspListdata.gpslocations[4].toString(),
+                            '',
+                            existingInspListdata.locations[4].toString(),
+                            '',
+                            '',
+                            '',
+                            'EXIST',
+                            existingInspListdata.cinsplist[4].toString(),
+                            existingInspListdata.inspcont.toString()
+                        );
+                        TiUtilities.setInspMstr(inspmstr);
+                        TiUtilities.pushPage(context, () => SttnInspection());
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[4] + ' at location : ' + existingInspListdata.locations[4] + ' is still Pending !!',
+                          style: TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10
+                          ),),
+                      )
+                  ),
+                )
+             /*   InkWell (
                 onLongPress: (){
                   print("On tap clicked" + existingInspListdata.startDates[0].toString());
                   InspMstrModel inspmstr;
@@ -179,10 +373,10 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
 
                     width: SizeConfig.screenWidth-10,
                           child: Expanded(
-                            child: new RaisedButton(
-                                color: animation.value,
+                            child: new ElevatedButton(
+                                //color: animation.value,
                                     onPressed: () {
-                                    controller.forward();
+                                  //  controller.forward();
                                     },
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -198,209 +392,8 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
                     ),
                 ),
 
-              ),
-              if (_isBlinkVisible[1])
-                InkWell(
-                  onLongPress: (){
-                    print("On tap clicked 1" + existingInspListdata.startDates[1].toString()+existingInspListdata.examtype[1].toString());
-                    InspMstrModel inspmstr;
-                    inspmstr = InspMstrModel(
-                        true,
-                        existingInspListdata.inspIDs[1].toString(),
-                        existingInspListdata.userid.toString(),
-                        existingInspListdata.examtype[1].toString(),
-                        existingInspListdata.startDates[1].toString(),
-                        '',
-                        existingInspListdata.gpslocations[1].toString(),
-                        '',
-                        existingInspListdata.locations[1].toString(),
-                        '',
-                        '',
-                        '',
-                        'EXIST',
-                        existingInspListdata.cinsplist[1].toString(),
-                        existingInspListdata.inspcont.toString()
-                    );
-                    print("before SttnInspection push");
-                    TiUtilities.setInspMstr(inspmstr);
-                    print("after SttnInspection push");
-                    TiUtilities.pushPage(context, () => SttnInspection());
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Container(
-                      width: SizeConfig.screenWidth-10,
-                      child: Expanded(
-                        child: new RaisedButton(
-                          color: animation.value,
-                          onPressed: () {
-                            controller.forward();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[1] + ' at location : ' + existingInspListdata.locations[1] + ' is still Pending !!',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )  ,
-              if (_isBlinkVisible[2])
-                InkWell (
-                  onLongPress: (){
-                    print("On tap clicked 2" + existingInspListdata.startDates[2].toString());
-                    InspMstrModel inspmstr;
-                    inspmstr = InspMstrModel(
-                        true,
-                        existingInspListdata.inspIDs[2].toString(),
-                        existingInspListdata.userid.toString(),
-                        existingInspListdata.examtype[2].toString(),
-                        existingInspListdata.startDates[2].toString(),
-                        '',
-                        existingInspListdata.gpslocations[2].toString(),
-                        '',
-                        existingInspListdata.locations[2].toString(),
-                        '',
-                        '',
-                        '',
-                        'EXIST',
-                        existingInspListdata.cinsplist[2].toString(),
-                        existingInspListdata.inspcont.toString()
-                    );
-                    TiUtilities.setInspMstr(inspmstr);
-                    print("before SttnInspection push" );
-                    TiUtilities.pushPage(context, () => SttnInspection());
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Container(
-                      width: SizeConfig.screenWidth-10,
-                      child: Expanded(
-                        child: new RaisedButton(
-                          color: animation.value,
-                          onPressed: () {
-                            controller.forward();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[2] + ' at location : ' + existingInspListdata.locations[2] + ' is still Pending !!',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )  ,
-              if (_isBlinkVisible[3])
-                InkWell (
-                  onLongPress: (){
-                    print("On tap clicked 3" + existingInspListdata.startDates[3].toString());
-                    InspMstrModel inspmstr;
-                    inspmstr = InspMstrModel(
-                        true,
-                        existingInspListdata.inspIDs[3].toString(),
-                        existingInspListdata.userid.toString(),
-                        existingInspListdata.examtype[3].toString(),
-                        existingInspListdata.startDates[3].toString(),
-                        '',
-                        existingInspListdata.gpslocations[3].toString(),
-                        '',
-                        existingInspListdata.locations[3].toString(),
-                        '',
-                        '',
-                        '',
-                        'EXIST',
-                        existingInspListdata.cinsplist[3].toString(),
-                        existingInspListdata.inspcont.toString()
-                    );
-                    TiUtilities.setInspMstr(inspmstr);
-                    print("before SttnInspection push");
-                    TiUtilities.pushPage(context, () => SttnInspection());
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Container(
-                      width: SizeConfig.screenWidth-10,
-                      child: Expanded(
-                        child: new RaisedButton(
-                          color: animation.value,
-                          onPressed: () {
-                            controller.forward();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[3] + ' at location : ' + existingInspListdata.locations[3] + ' is still Pending !!',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )  ,
-              if (_isBlinkVisible[4])
-                InkWell (
-                  onLongPress: (){
-                    print("On tap clicked" + existingInspListdata.startDates[0].toString());
-                    InspMstrModel inspmstr;
-                    inspmstr = InspMstrModel(
-                        true,
-                        existingInspListdata.inspIDs[4].toString(),
-                        existingInspListdata.userid.toString(),
-                        existingInspListdata.examtype[4].toString(),
-                        existingInspListdata.startDates[4].toString(),
-                        '',
-                        existingInspListdata.gpslocations[4].toString(),
-                        '',
-                        existingInspListdata.locations[4].toString(),
-                        '',
-                        '',
-                        '',
-                        'EXIST',
-                        existingInspListdata.cinsplist[4].toString(),
-                        existingInspListdata.inspcont.toString()
-                    );
-                    TiUtilities.setInspMstr(inspmstr);
-                    print("before SttnInspection push" );
-                    TiUtilities.pushPage(context, () => SttnInspection());
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: Container(
-                      width: SizeConfig.screenWidth-10,
-                      child: Expanded(
-                        child: new RaisedButton(
-                          color: animation.value,
-                          onPressed: () {
-                            controller.forward();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text('* ALERT: Station Inspection started on : ' + existingInspListdata.startDates[4] + ' at location : ' + existingInspListdata.locations[4] + ' is still Pending !!',
-                              style: TextStyle(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )  // Only visible if condition is true
-            ],
+              ) */
+             ],
           ),
 
           SingleChildScrollView(
@@ -472,7 +465,15 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
                                   }
                                   */
                                   else{
+                                    TiUtilities.showLoadingIndicator(context, "Please wait");
+
+                                    TiUtilities.onLocationSrvc();
+                                    TiUtilities.getLocationPermission();
+
+                                    Navigator.of(context).pop();
+
                                     TiUtilities.pushPage(context, () => TILocation());
+
                                   }
 
                                   // TiUtilities.pushPage(
@@ -591,7 +592,7 @@ class _UserHomePageFormState extends State<UserHomePageForm> with SingleTickerPr
                                     )),
                                 Padding(padding: EdgeInsets.all(5.0)),
                                 Container(
-                                  child: Text('Gate\nInspection',
+                                  child: Text('Gate\nInspection.....',
                                       style:
                                       Theme.of(context).textTheme.subtitle1,
                                       textAlign: TextAlign.center),
@@ -852,9 +853,26 @@ class NightInscpectionForm extends StatefulWidget {
 class _NightInscpectionFormState extends State<NightInscpectionForm> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+        appBar: TiUtilities.tiAppBar(context, "Night Inspection"),
+
+
+
+            body:  Center(
+                child: Text('This feature is under Developnment.'),
+              )
+
+
+
+
+
+      ),
+    );
   }
-}
+  }
+
 
 class CasualInspection extends StatefulWidget {
   CasualInspection({Key key}) : super(key: key);
@@ -866,7 +884,23 @@ class CasualInspection extends StatefulWidget {
 class _CasualInspectionState extends State<CasualInspection> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "Casual Inspection"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 
@@ -880,7 +914,23 @@ class TiFootplateInspection extends StatefulWidget {
 class _TiFootplateInspectionState extends State<TiFootplateInspection> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "FootPlate Inspection"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 
@@ -894,7 +944,23 @@ class TiAmbushCheck extends StatefulWidget {
 class _TiAmbushCheckState extends State<TiAmbushCheck> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "Ambush Check"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 
@@ -908,7 +974,23 @@ class MisReports extends StatefulWidget {
 class _MisReportsState extends State<MisReports> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "MIS Reports"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 
@@ -922,7 +1004,23 @@ class UserProfile extends StatefulWidget {
 class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "User Profile"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 
@@ -936,7 +1034,23 @@ class GateInspection extends StatefulWidget {
 class _GateInspectionState extends State<GateInspection> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return GestureDetector(
+
+      child: new Scaffold(
+          appBar: TiUtilities.tiAppBar(context, "Gate Inspection"),
+
+
+
+          body:  Center(
+            child: Text('This feature is under Developnment.'),
+          )
+
+
+
+
+
+      ),
+    );
   }
 }
 

@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/essential_safety_equipment_model.dart';
 import 'package:ti/commonutils/logger.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class EssentialSafetyEquiments extends StatefulWidget {
   @override
@@ -23,7 +23,10 @@ class EssentialSafetyEquiments extends StatefulWidget {
 
 class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
   File imageFile = null ;
-
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   List<String> selectedItemValue = [];
 
   List<bool> showText;
@@ -35,6 +38,7 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -69,6 +73,10 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
             jsonResult['ynList1'][1].toString() == 'NO' ? true : false];
@@ -118,12 +126,12 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
       showText = await [false, false];
 
       esseneqipMod = await new EssentialSafetyEquimentsModel(
-          SttnInspDtlsList.getEssnSafeList(), ['YES', 'YES'],
+          SttnInspDtlsList.getEssnSafeList(), ['SELECT', 'SELECT'],
           ['', ''],
           '');
 
       for (int i = 0; i < 2; i++){
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
       }
 
       for (int i = 0; i < 2; i++) whyNocontroller.add(TextEditingController());
@@ -202,7 +210,20 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < esseneqipMod.ynList1.length ; i++){
+                if(esseneqipMod.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
+                }
+                else
+                  esseneqipMod.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else{
 
             String base64Image = null ;
 
@@ -229,7 +250,7 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
                 }
               });
             }
-          },
+          } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -274,15 +295,18 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [  SizedBox(
           height: 2.0,
         ),
-        Padding(
+      Expanded(
+          child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                   controller: rmrkController,
-                  inputFormatters: [
+                                      maxLength: 100,                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                   ],
                   decoration: InputDecoration(
@@ -302,8 +326,14 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
                   onChanged: (val) {
                     esseneqipMod.rmrks1 = val;
                     //print('esseneqipMod.rmrks1:' + esseneqipMod.rmrks1);
-                  })),
-        ),
+    })),
+    )),
+    new IconButton(
+    onPressed: _listen,
+    icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+    color: Colors.black)),
+    ],
+    ),
         SizedBox(height: 10.0),
         Center(
           child: CameraCls(
@@ -313,6 +343,31 @@ class _EssentialSafetyEquimentsState extends State<EssentialSafetyEquiments> {
 
       ],
     );
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            esseneqipMod.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
   }
 
   Future<String> _callSaveEssentialSafetyEquimentsWebService(

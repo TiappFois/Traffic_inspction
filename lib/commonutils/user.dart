@@ -1,41 +1,33 @@
-import 'dart:convert';
-
-import 'package:flutter/physics.dart';
-
 class User {
-  String status;
-  User({this.status});
+  final String status;
+  final String userId;
+  final String username;
+  final String userType;
+  final String userDesgn;
+  final String userHQ;
+  final String userDvsn;
+  final String userMob;
+  User({
+    this.status,
+    this.userId,
+    this.username,
+    this.userType,
+    this.userDesgn,
+    this.userHQ,
+    this.userDvsn,
+    this.userMob,
+  });
 
-  User copyWith({String status}) {
+  factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      status: status ?? this.status,
+      userId: json['userId'],
+      status: json['status'],
+      username: json['username'],
+      userType: json['userType'],
+      userDesgn: json['userDesgn'],
+      userHQ: json['userHQ'],
+      userDvsn: json['userDvsn'],
+      userMob: json['userMob'],
     );
   }
-
-  Map<String, dynamic> toMap() {
-    return {'status': status};
-  }
-
-  factory User.fromMap(Map<String, dynamic> map) {
-    return User(
-      status: map['status'],
-    );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory User.fromJson(String source) => User.fromMap(json.decode(source));
-
-  @override
-  String toString() => 'User( status: $status)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is User && other.status == status;
-  }
-
-  @override
-  int get hashCode => status.hashCode;
 }

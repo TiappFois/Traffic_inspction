@@ -8,9 +8,10 @@ import 'package:ti/commonutils/logger.dart';
 import 'package:device_info/device_info.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
-//import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
 import 'package:sqflite/sqflite.dart';
+import 'package:ti/commonutils/user.dart';
 
 class DatabaseHelper {
   static final log = getLogger('DatabaseHelper');
@@ -25,15 +26,17 @@ class DatabaseHelper {
       "UpdateFlag"; //0 - Not Needed   // 1 - Needed  // 2 - Not Necessary(Update Later)
   static const String Tbl1_Col3_LatestVersion = "LatestVersion";
 
-  //TABLE-2 Login User
+//TABLE-2 Login User
+
   static const String TABLE_NAME_2 = "LoginUser";
   static const String Tbl2_Col1_LoginId = "LoginId";
   static const String Tbl2_Col2_Fname = "Fname";
-  static const String Tbl2_Col3_AuthLevel = "AuthLevel";
-  static const String Tbl2_Col4_Designation = "Designation";
-  static const String Tbl2_Col5_RlyCode = "RlyCode";
-  static const String Tbl2_Col6_RoleId = "RoleId";
-  static const String Tbl2_col7_LoginFlag = "LoginFlag";
+  static const String Tbl2_Col3_Mobile = "Mobile";
+  static const String Tbl2_Col4_userDesg = "userDesg";
+  static const String Tbl2_Col5_usrHQ = "usrHQ";
+  static const String Tbl2_Col6_usrType = "usrType";
+  static const String Tbl2_col7_userDvsn = "userDvsn";
+
 
   // make this a singleton class
   DatabaseHelper._privateConstructor();
@@ -51,10 +54,10 @@ class DatabaseHelper {
 
   // this opens the database (and creates it if it doesn't exist)
   _initDatabase() async {
-   // Directory documentsDirectory = await getApplicationDocumentsDirectory();
-   // String path = join(documentsDirectory.path, _databaseName);
-    //return await openDatabase(path,
-     //   version: _databaseVersion, onCreate: _onCreate);
+    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, _databaseName);
+    return await openDatabase(path,
+        version: _databaseVersion, onCreate: _onCreate);
   }
 
   // SQL code to create the database table
@@ -67,15 +70,16 @@ class DatabaseHelper {
           )
           ''');
 
+
     await db.execute('''
           CREATE TABLE $TABLE_NAME_2 (
             $Tbl2_Col1_LoginId TEXT NOT NULL,
             $Tbl2_Col2_Fname,
-            $Tbl2_Col3_AuthLevel,
-            $Tbl2_Col4_Designation,
-            $Tbl2_Col5_RlyCode,
-            $Tbl2_Col6_RoleId,
-            $Tbl2_col7_LoginFlag
+            $Tbl2_Col3_Mobile,
+            $Tbl2_Col4_userDesg,
+            $Tbl2_Col5_usrHQ,
+            $Tbl2_Col6_usrType,
+            $Tbl2_col7_userDvsn
           )
           ''');
   }
@@ -95,15 +99,18 @@ class DatabaseHelper {
   Future<TiUser> getCurrentUser() async {
     Database db = await instance.database;
     List<dynamic> tblResult = await db.query(TABLE_NAME_2);
+
     TiUser tiUser = TiUser(
         tblResult[0]['LoginId'].toString(),
         tblResult[0]['Fname'].toString(),
-        tblResult[0]['AuthLevel'].toString(),
-        tblResult[0]['Designation'].toString(),
-        tblResult[0]['RlyCode'].toString(),
-        tblResult[0]['RoleId'].toString(),
-        tblResult[0]['LoginFlag'].toString());
-    log.d('id ddd bdfdfd  ' + tblResult[0]['AuthLevel'].toString());
+        tblResult[0]['Mobile'].toStrig(),
+        tblResult[0]['userDesg'].toString(),
+        tblResult[0]['usrHQ'].toString(),
+        tblResult[0]['usrType'].toString(),
+        tblResult[0]['userDvsn'].toString(),
+        );
+
+    log.d('id ddd bdfdfd  ' + tblResult[0]['userDesg'].toString());
     return tiUser;
   }
 
@@ -156,20 +163,16 @@ class DatabaseHelper {
       //"pay_month": ""
     };
 
+    log.d("urlInputStringLogin1 = " + urlinput.toString());
+
     String urlInputString = json.encode(urlinput);
 
-    log.d("urlInputStringLogin = " + urlInputString);
+    log.d("urlInputStringLogin2 = " + urlInputString);
 
-    Map<String, String> headerInput = {
-      "Accept": "*/*",
-      "Content-Type": "application/json"
-
-      //"application/x-www-form-urlencoded"
-    };
     var url= TiConstants.webServiceUrl +'CheckLogin';
 
-    final response = await http.post(Uri.parse("http://172.16.4.58:7101/TIWebService-TrafficInspectionRest-context-root/resources/TiAppService/CheckLogin"),
-        headers: headerInput,
+    final response = await http.post(Uri.parse(url),
+        headers: TiConstants.headerInput,
         body: urlInputString,
         encoding: Encoding.getByName("utf-8"));
 
@@ -179,36 +182,35 @@ class DatabaseHelper {
 
     print("Jsonresult:"+jsonResult['loginuser']['userId']);
 
-    log.d("json result = " + jsonResult.toString());
-    log.d("response code = " + response.statusCode.toString());
+    final loginstatus = User.fromJson(jsonResult['loginuser']);
+    log.d('22 33311 lOGIN' + jsonResult.toString());
+    log.d('22 33311 lOGIN 2' + loginstatus.username);
 
+    //return loginstatus.status;
     if (response.statusCode == 200) {
-      print("Response200");
-     // log.d(jsonResult['isSuccess'].toString());
-    /*  if (jsonResult['isSuccess']) {
-        //{isSuccess: true, loginIfoVO: {loginid: rtm0037, fname: S M RIZVI, designation: Chief Loco Inspector, rlycode: RTM , roleid: LI}}
-        //{isSuccess: true, loginIfoVO: {loginid: avinesh, fname: AVINESH, authlevel: CRIS, rlycode: CRIS, roleid: IR}}
-        //String loginid, fname, authlevel, designation, rlycode, roleid, loginFlag;
-        tiUser = TiUser(
-            jsonResult['loginIfoVO']['loginid'].toString().toUpperCase(),
-            jsonResult['loginIfoVO']['fname'].toString(),
-            jsonResult['loginIfoVO']['authlevel'].toString(),
-            jsonResult['loginIfoVO']['designation'].toString(),
-            jsonResult['loginIfoVO']['rlycode'].toString(),
-            jsonResult['loginIfoVO']['roleid'].toString(),
-            'true');
-      } */
+      log.d('inside resposn code 200' + jsonResult.toString());
+      //    log.d(jsonResult['status'].toString() == 'LOG_IN_SUCCESS');
+      if (loginstatus.status == 'LOG_IN_SUCCESS') {
+        log.d('inside LOG_IN_SUCCESS');
+        //{isSuccess: true, loginIfoVO: {loginid: rtm0037, fname: S M RIZVI, usreMail: Chief Loco Inspector, usrLocn: RTM , usrType: LI}}
+        //{isSuccess: true, loginIfoVO: {loginid: avinesh, fname: AVINESH, authlevel: CRIS, usrLocn: CRIS, usrType: IR}}
+        //String loginid, fname, authlevel, usreMail, usrLocn, usrType, loginFlag;
+
       tiUser = TiUser(
-          jsonResult['loginuser']['userId'].toString(),
-          jsonResult['loginuser']['username'].toString(),
-          '',
-          '',
-          '',
-          '',
-          'true');
-     // saveUserLoginDtls(tiUser);
-     // log.d('Role Id ' + tiUser.roleid);
-      //log.d('authlevel ' + tiUser.authlevel);
+          loginstatus.userId,
+          loginstatus.username,
+          loginstatus.userMob,
+          loginstatus.userDesgn,
+          loginstatus.userHQ,
+          loginstatus.userType,
+          loginstatus.userDvsn
+          );
+    }
+
+      log.d('AFTER  TIUSER');
+      saveUserLoginDtls(tiUser);
+      log.d('Role Id ' + tiUser.userType);
+
       return tiUser;
     }
   }
@@ -216,16 +218,23 @@ class DatabaseHelper {
   Future<int> saveUserLoginDtls(TiUser tiUser) async {
     log.d("save function called");
     await deleteLoginUser();
+    log.d("AWAIT function called");
+
     Map<String, dynamic> row = {
-      DatabaseHelper.Tbl2_Col1_LoginId: tiUser.loginid.toUpperCase(),
-      DatabaseHelper.Tbl2_Col2_Fname: tiUser.fname,
-      DatabaseHelper.Tbl2_Col3_AuthLevel: tiUser.authlevel,
-      DatabaseHelper.Tbl2_Col4_Designation: tiUser.designation,
-      DatabaseHelper.Tbl2_Col5_RlyCode: tiUser.rlycode,
-      DatabaseHelper.Tbl2_Col6_RoleId: tiUser.roleid,
-      DatabaseHelper.Tbl2_col7_LoginFlag: "1"
+      DatabaseHelper.Tbl2_Col1_LoginId: tiUser.loginid ,//== null ? '' : tiUser.loginid,
+      DatabaseHelper.Tbl2_Col2_Fname: tiUser.fname ,//== null ? '' : tiUser.fname ,
+      DatabaseHelper.Tbl2_Col3_Mobile: tiUser.userMob ,//== null ? '' : tiUser.userMob ,
+      DatabaseHelper.Tbl2_Col4_userDesg: tiUser.userDesgn ,//== null ? '' : tiUser.userDesgn ,
+      DatabaseHelper.Tbl2_Col5_usrHQ: tiUser.userHQ ,//== null ? '' : tiUser.userHQ ,
+      DatabaseHelper.Tbl2_Col6_usrType: tiUser.userType ,//== null ? '' : tiUser.userType ,
+      DatabaseHelper.Tbl2_col7_userDvsn: tiUser.userDvsn //== null ? '' : tiUser.userDvsn
     };
+
+    log.d("save function called 0" + row.toString());
+
+    log.d("save function called 1");
     int id = await insertLoginUser(row);
+    log.d("save function called 2");
     log.d("Id after insertion = " + id.toString());
   }
 
@@ -237,6 +246,7 @@ class DatabaseHelper {
   Future<int> deleteLoginUser() async {
     log.d('DatabaseHelper deleteLoginUser() called');
     Database db = await instance.database;
+    log.d('DatabaseHelper deleteLoginUser() called 2');
     return await db.delete(TABLE_NAME_2);
   }
 

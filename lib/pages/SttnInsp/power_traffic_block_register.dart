@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/power_traffic_block_model%20.dart';
 import 'package:ti/commonutils/logger.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class PowerTrafficBlockRegister extends StatefulWidget {
   @override
@@ -23,7 +23,10 @@ class PowerTrafficBlockRegister extends StatefulWidget {
 
 class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
   File imageFile = null ;
-
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   List<String> selectedItemValue = [];
 
   List<bool> showText;
@@ -35,6 +38,7 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -69,6 +73,10 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false];
 
@@ -117,12 +125,12 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
       showText = await [false];
 
       powerTrafficMod = await new PowerTrafficBlockRegisterModel(
-          SttnInspDtlsList.getPowerTrafficList(), ['YES'],
+          SttnInspDtlsList.getPowerTrafficList(), ['SELECT'],
           [''],
           '');
 
       for (int i = 0; i < 1; i++){
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
       }
 
       for (int i = 0; i < 1; i++) whyNocontroller.add(TextEditingController());
@@ -202,34 +210,51 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
-
-            String base64Image = null ;
-
-            if (imageFile != null) {
-              base64Image = base64Encode(imageFile.readAsBytesSync());
-            //print
-            String fileName = imageFile.path.split("/").last;
-            log.d("fileName:" + fileName); }
-
-            powerTrafficMod.base64Image = base64Image;
-
-            powerTrafficMod.inspID = TiUtilities.inspmstr.inspid;
-
-            if (_formKey.currentState.validate()) {
-              TiUtilities.callSttnInspEntryWebService(context, json.encode(powerTrafficMod.toJson()), "savepowerTrfcBlkreg").then((res) {
-                if (res == 'Record Successfully Saved.') {
-                  print('Record Successfully Saved.');
-                  TiUtilities.showOKDialog(context, "Success!!")
-                      .then((res1) {
-                    Navigator.pushNamed(context, '/Priv_Number_Book');
-                  });
-                } else {
-                  print('Problem in Sign On. Please Contact to Supervisor');
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < powerTrafficMod.ynList1.length ; i++){
+                if(powerTrafficMod.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
                 }
-              });
-            }
-          },
+                else
+                  powerTrafficMod.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else {
+                String base64Image = null;
+
+                if (imageFile != null) {
+                  base64Image = base64Encode(imageFile.readAsBytesSync());
+                  //print
+                  String fileName = imageFile.path
+                      .split("/")
+                      .last;
+                  log.d("fileName:" + fileName);
+                }
+
+                powerTrafficMod.base64Image = base64Image;
+
+                powerTrafficMod.inspID = TiUtilities.inspmstr.inspid;
+
+                if (_formKey.currentState.validate()) {
+                  TiUtilities.callSttnInspEntryWebService(
+                      context, json.encode(powerTrafficMod.toJson()),
+                      "savepowerTrfcBlkreg").then((res) {
+                    if (res == 'Record Successfully Saved.') {
+                      print('Record Successfully Saved.');
+                      TiUtilities.showOKDialog(context, "Success!!")
+                          .then((res1) {
+                        Navigator.pushNamed(context, '/Priv_Number_Book');
+                      });
+                    } else {
+                      print('Problem in Sign On. Please Contact to Supervisor');
+                    }
+                  });
+                }
+              } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -274,15 +299,18 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [ SizedBox(
           height: 2.0,
         ),
-        Padding(
+      Expanded(
+          child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                   controller: rmrkController,
-                  inputFormatters: [
+                                      maxLength: 100,                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                   ],
                   decoration: InputDecoration(
@@ -297,8 +325,14 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
                   onChanged: (val) {
                     powerTrafficMod.rmrks1 = val;
                     //print('powerTrafficMod.rmrks1:' + powerTrafficMod.rmrks1);
-                  })),
-        ),
+    })),
+    )),
+    new IconButton(
+    onPressed: _listen,
+    icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+    color: Colors.black)),
+    ],
+    ),
         SizedBox(height: 10.0),
         Center(
           child: CameraCls(
@@ -309,7 +343,30 @@ class _PowerTrafficBlockRegisterState extends State<PowerTrafficBlockRegister> {
       ],
     );
   }
-
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            powerTrafficMod.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
   Future<String> _callSavePowerTrafficBlockRegisterWebService(
       PowerTrafficBlockRegisterModel cautOrdReg) async {
     //log.d(alpa);

@@ -10,7 +10,7 @@ import 'package:ti/commonutils/ti_constants.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/station_inspection_registerModel.dart';
 import 'package:ti/model/SttnInspModels/sttnInspDtlsList.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:convert';
 import 'package:ti/model/SttnInspModels/cautionOrdRegModel.dart';
 import 'Trn_Sgnl_Failure.dart';
@@ -26,7 +26,10 @@ class SttnInspReg extends StatefulWidget {
 class _SttnInspRegState extends State<SttnInspReg> {
 
   File imageFile = null ;
-
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   List<String> selectedItemValue = [];
 
   List<bool> showText;
@@ -38,6 +41,7 @@ class _SttnInspRegState extends State<SttnInspReg> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -72,6 +76,10 @@ class _SttnInspRegState extends State<SttnInspReg> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
             jsonResult['ynList1'][1].toString() == 'NO' ? true : false,
@@ -122,12 +130,12 @@ class _SttnInspRegState extends State<SttnInspReg> {
       showText = await [false, false, false,false];
 
       sttnInspRegMod = await new SttnInspRegModel(
-          SttnInspDtlsList.getSttnInspRegList(), ['YES', 'YES','YES','YES'],
+          SttnInspDtlsList.getSttnInspRegList(), ['SELECT', 'SELECT','SELECT','SELECT'],
           ['', '','',''],
           '');
 
       for (int i = 0; i < 4; i++){
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
       }
 
       for (int i = 0; i < 4; i++) whyNocontroller.add(TextEditingController());
@@ -205,34 +213,51 @@ class _SttnInspRegState extends State<SttnInspReg> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
-
-            String base64Image = null ;
-
-            if (imageFile != null) {
-              base64Image = base64Encode(imageFile.readAsBytesSync());
-            //print
-            String fileName = imageFile.path.split("/").last;
-            log.d("fileName:" + fileName); }
-
-            sttnInspRegMod.base64Image = base64Image;
-
-            sttnInspRegMod.inspID = TiUtilities.inspmstr.inspid;
-
-            if (_formKey.currentState.validate()) {
-              TiUtilities.callSttnInspEntryWebService(context, json.encode(sttnInspRegMod.toJson()), "saveSttnInspRgtr").then((res) {
-                if (res == 'Record Successfully Saved.') {
-                  print('Record Successfully Saved.');
-                  TiUtilities.showOKDialog(context, "Success!!")
-                      .then((res1) {
-                    Navigator.pushNamed(context, '/Safty_meet_reg');
-                  });
-                } else {
-                  print('Problem in Sign On. Please Contact to Supervisor');
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < sttnInspRegMod.ynList1.length ; i++){
+                if(sttnInspRegMod.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
                 }
-              });
-            }
-          },
+                else
+                  sttnInspRegMod.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else {
+                String base64Image = null;
+
+                if (imageFile != null) {
+                  base64Image = base64Encode(imageFile.readAsBytesSync());
+                  //print
+                  String fileName = imageFile.path
+                      .split("/")
+                      .last;
+                  log.d("fileName:" + fileName);
+                }
+
+                sttnInspRegMod.base64Image = base64Image;
+
+                sttnInspRegMod.inspID = TiUtilities.inspmstr.inspid;
+
+                if (_formKey.currentState.validate()) {
+                  TiUtilities.callSttnInspEntryWebService(
+                      context, json.encode(sttnInspRegMod.toJson()),
+                      "saveSttnInspRgtr").then((res) {
+                    if (res == 'Record Successfully Saved.') {
+                      print('Record Successfully Saved.');
+                      TiUtilities.showOKDialog(context, "Success!!")
+                          .then((res1) {
+                        Navigator.pushNamed(context, '/Safty_meet_reg');
+                      });
+                    } else {
+                      print('Problem in Sign On. Please Contact to Supervisor');
+                    }
+                  });
+                }
+              } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -278,15 +303,18 @@ class _SttnInspRegState extends State<SttnInspReg> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [ SizedBox(
           height: 2.0,
         ),
-        Padding(
+      Expanded(
+          child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                   controller: rmrkController,
-                  inputFormatters: [
+                                      maxLength: 100,                  inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                   ],
                   decoration: InputDecoration(
@@ -300,9 +328,14 @@ class _SttnInspRegState extends State<SttnInspReg> {
                   onChanged: (val){
                     sttnInspRegMod.rmrks1 = val;
                     //print('cautionOrdMod.rmrks1:' + cautionOrdMod.rmrks1);
-                  }
-              )),
-        ),
+    })),
+    )),
+    new IconButton(
+    onPressed: _listen,
+    icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+    color: Colors.black)),
+    ],
+    ),
 
         SizedBox(height: 10.0),
         Center(
@@ -315,7 +348,30 @@ class _SttnInspRegState extends State<SttnInspReg> {
     );
 
   }
-
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            sttnInspRegMod.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
   Future<String> _callSaveCautionOrdRegWebService(
       SttnInspRegModel sttninspreg) async {
     //log.d(alpa);

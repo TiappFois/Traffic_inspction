@@ -283,7 +283,7 @@ class _MnthSTFailureState extends State<MnthSTFailure> {
                   child: Container(
                       child: TextFormField(
                           controller: rmrkController,
-                          inputFormatters: [
+                                      maxLength: 100,                          inputFormatters: [
                             FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                           ],
                           decoration: InputDecoration(

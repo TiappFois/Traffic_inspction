@@ -21,7 +21,7 @@ import 'package:package_info/package_info.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:ti/generated/l10n.dart';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'ti_constants.dart';
 
 class TiUtilities {
@@ -47,8 +47,32 @@ class TiUtilities {
     log.d("TiUtilities() called---");
   }
 
- static Future<Position> getUserGeoPosition() async {
-    var geoPos = Position(latitude: 0.0, longitude: 0.0);
+  static Future<void> onLocationSrvc() async{
+    bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (locationServiceEnabled == null || !locationServiceEnabled) {
+      log.d(locationServiceEnabled.toString() +
+          ' : locationServiceEnabled Issue');
+      print(locationServiceEnabled.toString() +
+          ' : locationServiceEnabled Issue');
+      locationServiceEnabled = await Geolocator.openLocationSettings();
+    }
+  }
+
+  static Future<void> getLocationPermission() async{
+    LocationPermission locationPermission =
+    await Geolocator.checkPermission();
+    if (!(locationPermission == LocationPermission.whileInUse ||
+        locationPermission == LocationPermission.always)) {
+      log.d(locationPermission.toString() + ' : locationPermission Issue');
+      print(locationPermission.toString() + ' : locationPermission Issue');
+      await Geolocator.requestPermission();
+    }
+  }
+
+  static var geoPos ;
+
+  static Future<Position> getUserGeoPosition() async {
+
     print("In getprosition");
     bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
     if (locationServiceEnabled == null || !locationServiceEnabled) {
@@ -65,7 +89,9 @@ class TiUtilities {
         log.d(locationPermission.toString() + ' : locationPermission Issue');
         print(locationPermission.toString() + ' : locationPermission Issue');
         await Geolocator.requestPermission();
-      } else {
+      }
+      if ((locationPermission == LocationPermission.whileInUse ||
+          locationPermission == LocationPermission.always)) {
         try {
           print("geoPos1" + geoPos.toString());
           geoPos = await Geolocator.getCurrentPosition(
@@ -389,7 +415,7 @@ class TiUtilities {
     double currentVersion =
     double.parse(packageInfo.version.trim().replaceAll(".", ""));
     log.d(currentVersion);
-    if (checkNewVersion) {
+ /*   if (checkNewVersion) {
       try {
         double newVersion = 0.0;
         List versionDetail =
@@ -410,7 +436,7 @@ class TiUtilities {
         log.d('Unable to fetch remote config. Cached or default values will be '
             'used');
       }
-    }
+    } */
   }
 
   static showVersionDialog(context) async {
@@ -786,7 +812,7 @@ class TiUtilities {
     var connectivityresult;
     try {
       connectivityresult =
-      await InternetAddress.lookup('tiapp.indianrail.gov.in');
+      await InternetAddress.lookup('foistest.indianrail.gov.in');
       if (connectivityresult != null) {
         return true;
       } else {
@@ -794,6 +820,7 @@ class TiUtilities {
       }
     } on SocketException catch (_) {
       log.d('internet not available');
+      //return true;
       return false;
       //_scaffoldkey.currentState.showSnackBar(snackbar1);
     }
@@ -872,6 +899,37 @@ class TiUtilities {
         });
       } else {}
     });
+  }
+
+
+  static void showLoadingIndicator(BuildContext context,String text) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return WillPopScope(
+            onWillPop: () async => false,
+            child: SimpleDialog(
+
+                backgroundColor: Colors.teal,
+                children: <Widget>[
+                  Center(
+                    child: Column(children: const [
+                      CircularProgressIndicator(
+                        backgroundColor: Colors.white,
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Please Wait....",
+                        style: TextStyle(color: Colors.white),
+                      )
+                    ]),
+                  )
+                ]));
+      },
+    );
   }
 
   static Future<void> showLoadingDialog(
@@ -1052,8 +1110,8 @@ class TiUtilities {
   }
 
   static void setTiUser(TiUser param) {
-    user = TiUser(param.loginid, param.fname, param.authlevel,
-        param.designation, param.rlycode, param.roleid, param.loginFlag);
+    user = TiUser(param.loginid, param.fname, param.userMob, param.userDesgn,
+        param.userHQ, param.userType, param.userDvsn);
   }
 
   static void setInspMstr(InspMstrModel param) {
@@ -1077,9 +1135,9 @@ class TiUtilities {
 }
 
 class TiUser {
-  String loginid, fname, authlevel, designation, rlycode, roleid, loginFlag;
-  TiUser(this.loginid, this.fname, this.authlevel, this.designation,
-      this.rlycode, this.roleid, this.loginFlag);
+  String loginid, fname, userMob, userDesgn, userHQ, userType, userDvsn;
+  TiUser(this.loginid, this.fname, this.userMob, this.userDesgn, this.userHQ,
+      this.userType, this.userDvsn);
 }
 
 
@@ -1108,7 +1166,17 @@ class dropdowncls extends StatefulWidget {
 }
 
 class _dropdownclsState extends State<dropdowncls> {
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
+  final GlobalKey dropdownKey = GlobalKey();
 
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1138,45 +1206,53 @@ class _dropdownclsState extends State<dropdowncls> {
           trailing: SizedBox(
             width: 100,
 
-            child:  DropdownButtonFormField(
+            child:  GestureDetector(
+              onTap: openItemsList,
+              child: DropdownButtonFormField(
+                key: dropdownKey,
               decoration: const InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                    //borderRadius : const BorderRadius.all(Radius.circular(4.0)),
+                    borderSide: const BorderSide(color: Colors.teal),
+                  ),
 
-                enabledBorder: OutlineInputBorder(
-                  //borderRadius : const BorderRadius.all(Radius.circular(4.0)),
-                  borderSide: const BorderSide(color: Colors.teal),
                 ),
+                value: widget.selectedItem[widget.index].toString(),
+                items:  _dropDownItem(),
+                onChanged: (newSelectedValue) {
+                  // setState(() async {
+                  widget.selectedItem[widget.index] =
+                      newSelectedValue.toString();
+                  widget.ynlst[widget.index] = newSelectedValue.toString();
+                  print("TrnSgnlFailureModdddd.:" + widget.index.toString() + widget.ynlst[widget.index]);
+                  if(newSelectedValue.toString() == 'NO'){
+                    widget.showTextField[widget.index] = true;
+                    print("_showTextField:"  + widget.showTextField[widget.index].toString());
+                    //show = true;
+                  }
+                  else{
+                    widget.whyNolst[widget.index] = '';
+                    widget.whyNoCont[widget.index].text = '';
+                    widget.showTextField[widget.index] = false;
+
+                    print("_showTextField:" + widget.showTextField[widget.index].toString() );
+
+                  }
+                  widget.dropdowntextcallback(widget.whyNoCont ,widget.selectedItem, widget.showTextField);
+                  // });
+
+                },
+
               ),
-              value: widget.selectedItem[widget.index].toString(),
-              items:  _dropDownItem(),
-              onChanged: (newSelectedValue) {
-                // setState(() async {
-                widget.selectedItem[widget.index] =
-                    newSelectedValue.toString();
-                widget.ynlst[widget.index] = newSelectedValue.toString();
-                print("TrnSgnlFailureModdddd.:" + widget.index.toString() + widget.ynlst[widget.index]);
-                if(newSelectedValue.toString() == 'NO'){
-                  widget.showTextField[widget.index] = true;
-                  print("_showTextField:"  + widget.showTextField[widget.index].toString());
-                  //show = true;
-                }
-                else{
-                  widget.whyNolst[widget.index] = '';
-                  widget.whyNoCont[widget.index].text = '';
-                  widget.showTextField[widget.index] = false;
-
-                  print("_showTextField:" + widget.showTextField[widget.index].toString() );
-
-                }
-                widget.dropdowntextcallback(widget.whyNoCont ,widget.selectedItem, widget.showTextField);
-                // });
-
-              },
-
             ),
           ),
         ),
         Visibility(
             visible: widget.showTextField[widget.index],
+    child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+    Expanded(
             child: Container(
               child: SizedBox(
                 //width: 200,
@@ -1228,18 +1304,66 @@ class _dropdownclsState extends State<dropdowncls> {
                 ),
               ),
             )
-        ),
-      ],
-    );
+        ),  new IconButton(
+          onPressed: _listen,
+          icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+              color: Colors.black)),
+    ],
+    ),
+        )
+      ]);
   }
+  void _listen() async {
+    print("11");
+    if (!_isListening) {
+      bool available = await _speech.initialize(
 
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            print("rsult 22");
+            _text = val.recognizedWords;
+            widget.whyNoCont[widget.index].text = val.recognizedWords;
+            widget.whyNolst[widget.index]=widget.whyNoCont[widget.index].text;
+
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
   static List<DropdownMenuItem<String>> _dropDownItem() {
-    List<String> ddl = ["NO", "YES"];
+    List<String> ddl = ["SELECT","YES","NO"];
     return ddl
         .map((value) => DropdownMenuItem(
       value: value,
       child: Text(value),
     ))
         .toList();
+  }
+
+  void openItemsList() {
+    if(dropdownKey.currentContext == null) return;
+    GestureDetector detector;
+
+    // Go down the tree to find the first GestureDetector, which should be the one from DropdownButton.
+    void search(BuildContext context) {
+      context.visitChildElements((element) {
+        if(detector != null) return;
+        if(element.widget is GestureDetector) detector = element.widget as GestureDetector;
+        else search(element);
+      });
+    }
+    search(dropdownKey.currentContext);
+    if(detector != null && detector.onTap != null) detector.onTap();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ti/commonutils/logger.dart';
 import 'package:ti/commonutils/mydatetime_picker.dart';
@@ -24,7 +25,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
   var jsonResultList;
 
   String userId,
-      userMob,
+
       userName,
       userMobile,
       userMailid,
@@ -53,9 +54,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
   //TextEditingController systemTimeController = TextEditingController();
   double width, height, font, headingFont, homeIconAlign;
   var padding;
-  ProfileModel _userProfilemodel = ProfileModel();
-
-  //final date = FocusNode();
+    //final date = FocusNode();
   final userNameControllerFocus = FocusNode();
   final userMobileControllerFocus = FocusNode();
   final usermailControllerFocus = FocusNode();
@@ -163,8 +162,8 @@ class _user_profiledetailsState extends State<user_profiledetails> {
     log.d("RAJESH initState3");
 
     setState(() {
-      zoneSubheadList = onZoneHeadChange(profile.userHQ);
-      log.d("RAJESH initState1" + zoneSubheadList.toString());
+      //zoneSubheadList = onZoneHeadChange(profile.userHQ);
+     // log.d("RAJESH initState1" + zoneSubheadList.toString());
 
       //List<String> onZoneHeadChange(String zone)
       log.d("RAJESH initState3");
@@ -182,13 +181,13 @@ class _user_profiledetailsState extends State<user_profiledetails> {
       usernameController.text = "";
       usermobileController.text = "";
       usermailIdController.text = "";
-      userDOAController.text = "";
-      userDOJController.text = "";
-      userDOBController.text = "";
+     // userDOAController.text = "";
+      //userDOJController.text = "";
+     // userDOBController.text = "";
       userHQController.text = "";
       userDvsnController.text = "";
       userSectionController.text = "";
-      userDesignationController.text = "";
+     // userDesignationController.text = "";
     });
   }
 
@@ -249,25 +248,25 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           context, "User Profile  (" + TiUtilities.user.loginid + ')'),
       body: Builder(
           builder: (context) => SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 15.0),
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: bottom),
-                  child: Container(
-                    child: Form(
-                      key: _formKey,
-                      autovalidateMode: _autoValidate,
-                      child: _loading
-                          ? SizedBox(
-                              height: height,
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            )
-                          : FormUI(context),
+            padding: EdgeInsets.symmetric(horizontal: 15.0),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bottom),
+              child: Container(
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: _autoValidate,
+                  child: _loading
+                      ? SizedBox(
+                    height: height,
+                    child: Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  ),
+                  )
+                      : FormUI(context),
                 ),
-              )),
+              ),
+            ),
+          )),
     );
   }
 
@@ -287,24 +286,36 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
+
                 // maxLength: 50,
                 style: TextStyle(fontSize: font),
                 controller: usernameController,
 
                 textCapitalization: TextCapitalization.characters,
                 // readOnly: true,
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter Your Name";
+
+                  if (value.length < 3)
+                    return 'Name must be more than 2 charater';
+
+                  return null;
+
+                },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("[a-zA-Z ]")),
+                  LengthLimitingTextInputFormatter(20),
+                ],
 
                 onSaved: (String val) {
-                  _userProfilemodel.userName = val;
+                  profile.userName = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  // content = usernameController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -320,6 +331,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                   hintText: 'Your Name',
                   hintStyle: TextStyle(color: Colors.grey),
                   labelText: 'Enter Your Name',
+
                   labelStyle: TextStyle(
                       color: Colors.teal,
                       fontSize: font,
@@ -334,22 +346,33 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              ////height: 50,
               width: 50.0,
               child: TextFormField(
                 //maxLength: 50,
                 style: TextStyle(fontSize: font),
                 controller: usermobileController,
                 // readOnly: true,
+                validator: (String value){
+                  //if(value.isEmpty)
+                   // return "Please Enter Your Name";
 
+                  if (value.length < 10)
+                    return 'Please Enter Valid Mobile Number';
+
+                  return null;
+
+                },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("[0-9]")),
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                keyboardType: TextInputType.phone,
                 onSaved: (String val) {
-                  _userProfilemodel.userMobile = val;
+                  profile.userMobile = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  // content = usernameController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -374,26 +397,38 @@ class _user_profiledetailsState extends State<user_profiledetails> {
             ),
           ),
         ]),
+        SizedBox(height: 10.0),
         Row(mainAxisSize: MainAxisSize.max, children: <Widget>[
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              ////height: 50,
               width: 50.0,
               child: TextFormField(
                 // maxLength: 50,
-                style: TextStyle(fontSize: 10),
+                style: TextStyle(fontSize: font),
                 controller: userDesignationController,
                 // readOnly: true,
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter Your Designation";
+
+                  //if (value.length < 3)
+                   // return 'Name must be more than 2 charater';
+
+                  return null;
+
+                },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("[a-zA-Z0-9 ]")),
+                  LengthLimitingTextInputFormatter(20),
+                ],
 
                 onSaved: (String val) {
-                  _userProfilemodel.userDesignation = val;
+                  profile.userDesignation = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  // content = usernameController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -424,21 +459,35 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
                 style: TextStyle(fontSize: font),
                 controller: usermailIdController,
                 // readOnly: true,
+                validator: (String value){
+                  Pattern pattern =
+                      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+                      r"{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+                      r"{0,253}[a-zA-Z0-9])?)*$";
+                  RegExp regex = new RegExp(pattern);
+                  if (!regex.hasMatch(value) || value == null)
+                    return 'Enter a valid email address';
+                  else
+                    return null;
+
+                },
+                inputFormatters: [
+
+                  LengthLimitingTextInputFormatter(20),
+                ],
 
                 onSaved: (String val) {
-                  _userProfilemodel.userMailid = val;
+                  profile.userMailid = val;
                 },
+                keyboardType: TextInputType.emailAddress,
                 //controller: myController,
-                onEditingComplete: () {
-                  // content = usernameController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -469,26 +518,31 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
                 style: TextStyle(fontSize: font),
                 controller: userDOBController,
                 focusNode: userDOBControllerFocus,
+                keyboardType: TextInputType.datetime,
+                readOnly: true,
                 // readOnly: true,
-                validator: (val) {
-                  if (val == null || val == '') {
-                    return '';
-                  }
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter Your D.O.B";
+
+                  //if (value.length < 3)
+                  // return 'Name must be more than 2 charater';
+
+                  return null;
+
                 },
+
                 onSaved: (String val) {
-                  _userProfilemodel.userDOB = val;
+                  profile.userDOB = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  //content = myController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -514,7 +568,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                     ),
                     onPressed: () async {
                       userDOBController.text =
-                          await MyDateTimePicker.myDatePicker(context);
+                      await MyDateTimePicker.myDatePicker(context);
                       FocusScope.of(context)
                           .requestFocus(userDOJControllerFocus);
                     },
@@ -539,26 +593,30 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
                 style: TextStyle(fontSize: font),
                 controller: userDOJController,
                 focusNode: userDOJControllerFocus,
                 readOnly: true,
-                validator: (val) {
-                  if (val == null || val == '') {
-                    return '';
-                  }
+                keyboardType: TextInputType.datetime,
+
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter Your Joining Date";
+
+                  //if (value.length < 3)
+                  // return 'Name must be more than 2 charater';
+
+                  return null;
+
                 },
                 onSaved: (String val) {
-                  _userProfilemodel.userDOJ = val;
+                  profile.userDOJ = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  //content = myController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -584,7 +642,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                     ),
                     onPressed: () async {
                       userDOJController.text =
-                          await MyDateTimePicker.myDatePicker(context);
+                      await MyDateTimePicker.myDatePicker(context);
                       FocusScope.of(context)
                           .requestFocus(userDOJControllerFocus);
                     },
@@ -608,26 +666,30 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
                 style: TextStyle(fontSize: font),
                 controller: userDOAController,
                 focusNode: userDOAControllerFocus,
-                // readOnly: true,
-                validator: (val) {
-                  if (val == null || val == '') {
-                    return '';
-                  }
+                keyboardType: TextInputType.datetime,
+                readOnly: true,
+
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter Your Appointment Date";
+
+                  //if (value.length < 3)
+                  // return 'Name must be more than 2 charater';
+
+                  return null;
+
                 },
                 onSaved: (String val) {
-                  _userProfilemodel.userDOA = val;
+                  profile.userDOA = val;
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  //content = myController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -653,7 +715,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                     ),
                     onPressed: () async {
                       userDOAController.text =
-                          await MyDateTimePicker.myDatePicker(context);
+                      await MyDateTimePicker.myDatePicker(context);
                       FocusScope.of(context)
                           .requestFocus(userDOAControllerFocus);
                     },
@@ -662,7 +724,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                   filled: true,
                   hintText: 'Select DOA ',
                   hintStyle: TextStyle(color: Colors.grey),
-                  labelText: 'Apointment Date',
+                  labelText: 'Appointment Date',
                   labelStyle: TextStyle(
                       color: Colors.teal,
                       fontSize: headingFont,
@@ -677,7 +739,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: DropdownButtonFormField(
                 //  maxLength: 50,
@@ -692,7 +754,8 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                 // readOnly: true,
 
                 onSaved: (String val) {
-                  //  _userProfilemodel.userHQ = val;
+                  log.d("inside call of HQ");
+                   profile.userHQ = val;
                 },
                 //controller: myController,
                 //maxLength: 25,
@@ -724,12 +787,13 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                 }).toList(),
                 value: userHQ,
                 onChanged: (newValue) {
-                  log.d(newValue);
+                  log.d('nm' + newValue);
                   setState(() {
                     profile.userHQ = newValue;
                     // _reportAbnormalityModel.abnormalityHead = newValue;
                     // _reportAbnormalityModel.abnormalitySubhead = "Select";
                     zoneSubheadList = onZoneHeadChange(newValue);
+                    userDvsn = 'Select' ;
                     log.d("zoneSubheadList" + zoneSubheadList.toString());
                     //  _isButtonDisabled = true;
                   });
@@ -744,7 +808,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: DropdownButtonFormField(
                 isDense: true,
@@ -754,6 +818,10 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                     return '';
                   }
                 },
+            onSaved: (String val) {
+            log.d("inside call of userDvsn"+val);
+            profile.userDvsn = val;
+            },
                 decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.teal),
@@ -778,12 +846,12 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                               color: Colors.teal, fontSize: font)),
                       value: item);
                 }).toList(),
-                value: selectedValue,
+                value: userDvsn,
                 onChanged: (newValue) {
-                  log.d('Divsion selected  value $newValue');
+                  log.d('Divsion selected  value :' + newValue);
                   setState(() {
-                    selectedValue =
-                        newValue; // _reportAbnormalityModel.abnormalitySubhead = newValue;
+                          userDvsn = newValue; // _reportAbnormalityModel.abnormalitySubhead = newValue;
+                          profile.userDvsn = newValue;
                   });
                 },
               ),
@@ -796,22 +864,33 @@ class _user_profiledetailsState extends State<user_profiledetails> {
           new Padding(padding: EdgeInsets.all(2.0)),
           Expanded(
             child: Container(
-              height: 50,
+              //height: 50,
               width: 50.0,
               child: TextFormField(
                 //   maxLength: 50,
                 style: TextStyle(fontSize: 10),
                 controller: userSectionController,
-                // readOnly: true,
+                validator: (String value){
+                  if(value.isEmpty)
+                    return "Please Enter the Section";
 
+                  if (value.length < 3)
+                   return 'Section must be more than 2 charater';
+
+                  return null;
+
+                },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("[a-zA-Z ]")),
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 onSaved: (String val) {
-                  _userProfilemodel.userSection = val;
+                  log.d("Section on saved called :"+val);
+                  profile.userSection = val;
+                    log.d("Section on saved called :"+ profile.userSection);
                 },
                 //controller: myController,
-                onEditingComplete: () {
-                  // content = usernameController.text;
-                  //log.d(content);
-                },
+
                 //maxLength: 25,
                 //maxLengthEnforced: true,
                 textAlign: TextAlign.left,
@@ -829,7 +908,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
                   labelText: 'Enter Section Name',
                   labelStyle: TextStyle(
                       color: Colors.teal,
-                      fontSize: 12,
+                      fontSize: font,
                       fontWeight: FontWeight.bold),
                 ),
               ),
@@ -871,9 +950,24 @@ class _user_profiledetailsState extends State<user_profiledetails> {
 
                       _formKey.currentState.save();
 
-                      setProfileData();
+                      if (_formKey.currentState.validate()) {
+                        setProfileData().then((res) {
+                          log.d("res+"+res.toString());
+                          if (res == "Record Successfully Saved.") {
+                            print('Record Successfully Saved.');
+                            TiUtilities.showOKDialog(context, "User Profile Saved Successfully!!")
+                                .then((res1) {
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/user_home', (Route<dynamic> route) => false);
+                            });
+                          } else {
+                            print('Problem in Sign On. Please Contact to Supervisor');
+                          }
+                        });
+                      }
+
                       //   _liFootplateRecordModel.liId =
-                      // _userProfilemodel.userId = TiUtilities.user.loginid;
+                      // profile.userId = TiUtilities.user.loginid;
                       //   res = _callCounsellingWebService(counsellingModel);
                     },
                     textColor: Colors.white,
@@ -896,21 +990,21 @@ class _user_profiledetailsState extends State<user_profiledetails> {
     );
   }
 
-  void setProfileData() async {
+  Future<String> setProfileData() async {
     log.d('Inserting data  from service  CreateProfile');
     var url = TiConstants.webServiceUrl + 'CreateProfile';
     Map<String, dynamic> urlinput = {
       "userId": TiUtilities.user.loginid,
-      "userName": usernameController.text,
-      "userMobile": usermobileController.text,
-      "userMailid": usermailIdController.text,
-      "userDOA": userDOAController.text,
-      "userDOJ": userDOJController.text,
-      "userDOB": userDOBController.text,
-      "userHQ": userHQController.text,
-      "userDvsn": userDvsnController.text,
-      "userSection": userSectionController.text,
-      "userDesignation": userDesignationController.text
+      "userName": profile.userName,
+      "userMobile": profile.userMobile,
+      "userMailid": profile.userMailid,
+      "userDOA": profile.userDOA,
+      "userDOJ": profile.userDOJ,
+      "userDOB": profile.userDOB,
+      "userHQ": profile.userHQ,
+      "userDvsn": profile.userDvsn,
+      "userSection": profile.userSection,
+      "userDesignation": profile.userDesignation
     };
     String urlInputString = json.encode(urlinput);
 
@@ -922,13 +1016,29 @@ class _user_profiledetailsState extends State<user_profiledetails> {
         body: urlInputString,
         encoding: Encoding.getByName("utf-8"));
 
-    setState(() {
-      jsonResultList = json.decode(responseSubmittedprofile.body);
 
-      final profile = ProfileModel.fromJson(jsonResultList);
-      log.d("RAJESH PROFILE" + profile.userDesignation);
+   // setState(() {
+     // profile = ProfileModel.fromJson(jsonResultList);
+      log.d("SINHA111S" + profile.userSection);
+      log.d("SINHA111" + profile.userDvsn);
+      log.d("responseSubmittedprofile.statusCode" + responseSubmittedprofile.statusCode.toString());
+
+    if (responseSubmittedprofile == null || responseSubmittedprofile.statusCode != 200) {
+      throw new Exception(
+          'HTTP request failed, statusCode: ${responseSubmittedprofile?.statusCode}');
+    } else {
+
+      jsonResultList = json.decode(responseSubmittedprofile.body);
+      //profile = ProfileModel.fromJson(jsonResultList);
+      log.d("INTO SET STATE 111U1"+jsonResultList.toString());
+
+      return 'Record Successfully Saved.';
+    }
+
+
+/*
       //userId = profile.userId == "" ? "NA" : profile.userId;
-      userMob = profile.userMobile == "" ? "NA" : profile.userMobile;
+      userMobile = profile.userMobile == "" ? "NA" : profile.userMobile;
       userMailid = profile.userMailid == "" ? "NA" : profile.userMailid;
       userDOB = profile.userDOB == "" ? "NA" : profile.userDOB;
       userDOA = profile.userDOA == "" ? "NA" : profile.userDOA;
@@ -936,9 +1046,9 @@ class _user_profiledetailsState extends State<user_profiledetails> {
       userHQ = profile.userHQ == "" ? "NA" : profile.userHQ;
       userDvsn = profile.userDvsn == "" ? "NA" : profile.userDvsn;
       userSection = profile.userSection == "" ? "NA" : profile.userSection;
-      userDesignation =
-          profile.userDesignation == "" ? "NA" : profile.userDesignation;
-    });
+      userDesignation = profile.userDesignation == "" ? "NA" : profile.userDesignation;  */
+
+   // });
   }
 
   void getProfileData() async {
@@ -974,7 +1084,7 @@ class _user_profiledetailsState extends State<user_profiledetails> {
       log.d("SINHA" + profile.userDesignation);
 
       usernameController.text = profile.userName;
-      log.d("userMob *" + userMob.toString());
+      //log.d("userMob *" + userMob.toString());
 
       usermobileController.text = profile.userMobile;
       usermailIdController.text = profile.userMailid;
@@ -982,10 +1092,19 @@ class _user_profiledetailsState extends State<user_profiledetails> {
       userDOJController.text = profile.userDOJ;
       userDOBController.text = profile.userDOB;
       userHQController.text = profile.userHQ;
+
       userHQ = profile.userHQ;
+
+      zoneSubheadList = onZoneHeadChange(profile.userHQ);
+
       userDvsnController.text = profile.userDvsn;
+
+      userDvsn = profile.userDvsn;
+
       userSectionController.text = profile.userSection;
       userDesignationController.text = profile.userDesignation;
+      log.d("userSection *" + profile.userSection);
+
     });
   }
 }

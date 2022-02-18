@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 class LoginBl {
   static final log = getLogger('LoginBl');
   static final dbHelper = DatabaseHelper.instance;
+
   LoginBl() {
     log.d("LoginBl called---");
   }
@@ -46,16 +47,16 @@ class LoginBl {
     });
   }
 
-  static Future<String> login1(
-      String userType, String userId, String password) async {
+  static Future<String> login1(String userType, String userId,
+      String password) async {
     var jsonResult;
     Map<String, dynamic> urlinput = {
       'strUserid': 'rajesh@cris',
       'strPassword': 'sinha'
     };
-    var url= TiConstants.webServiceUrl +'CheckLogin';
+    var url = TiConstants.webServiceUrl + 'CheckLogin';
     String urlInputString = json.encode(urlinput);
-   // var url1 =    'http://172.16.4.56:7101/FirstRest-RestService-context-root/resources/TiAppService/';
+    // var url1 =    'http://172.16.4.56:7101/FirstRest-RestService-context-root/resources/TiAppService/';
     log.d("url = " + url);
     log.d("urlInputString = " + urlInputString);
     log.d('1111111111111111111');
@@ -72,25 +73,25 @@ class LoginBl {
     return jsonResult;
   }
 
-  static Future<String> login2(
-      String userType, String userId, String password) async {
+  static Future<String> login2(String userType, String userId,
+      String password) async {
     var jsonResult;
     jsonResult = "LOG_IN_SUCCESS";
     return jsonResult;
   }
 
-  static Future<String> login(
-      String userType, String userId, String password) async {
+  static Future<String> login(String userType, String userId,
+      String password) async {
     String loginResult;
     try {
-      print("INMyLogin" + userType+"  "+userId +"  " + password);
+      print("INMyLogin" + userType + "  " + userId + "  " + password);
       // TiUser user;
       TiUser user = await dbHelper.callLoginWebService(
           userType, userId.trim().toUpperCase(), password);
       //log.d(user.roleid);
       //log.d('Role Id in LoginBloc ' + user.roleid);
-      print("INMyLogin2"+user.loginid);
-     // log.d('authlevel LoginBloc ' + user.authlevel);
+      print("INMyLogin2" + user.loginid);
+      // log.d('authlevel LoginBloc ' + user.authlevel);
       TiUtilities.setTiUser(user);
       loginResult = 'LOG_IN_SUCCESS';
     } catch (e) {
@@ -112,25 +113,33 @@ class LoginBl {
     return loginOutResult;
   }
 
-  static Future<String> changePassword(
-      String currentPassword, String newPassword) async {
-    String userType, changePasswordResponseMessage = "";
+  static Future<String> changePassword(String currentPassword,
+      String newPassword) async {
+    String userType,
+        changePasswordResponseMessage = "";
     var jsonResult;
-    if (TiUtilities.user.roleid == 'CREW' || TiUtilities.user.roleid == 'LI') {
-      userType = TiUtilities.user.roleid;
+    if (TiUtilities.user.userType == 'TI' ||
+        TiUtilities.user.userType == 'LI') {
+      userType = TiUtilities.user.userType;
     } else {
-      userType = TiUtilities.user.authlevel;
+      userType = TiUtilities.user.userDesgn;
     }
     try {
       Map<String, dynamic> urlinput = {
-        'paramList': [
-          TiUtilities.user.loginid,
-          currentPassword,
-          newPassword,
-          userType
-        ]
+
+        "strUserid": TiUtilities.user.loginid,
+        "strCPassword": currentPassword,
+        "strNPassword": newPassword,
+        "strUserType": userType,
+        "status": 0
       };
+
+      //log.d(user.roleid);
+      //log.d('Role Id in LoginBloc ' + user.roleid);
+      print("INChangePassword2");
+
       String urlInputString = json.encode(urlinput);
+
       var url = TiConstants.webServiceUrl + 'changePassword';
       log.d("url==$url======urlInputString=====$urlInputString");
       final response = await http.post(Uri.parse(url),
@@ -144,11 +153,23 @@ class LoginBl {
             'HTTP request failed, statusCode: ${response.statusCode}');
       } else {
         log.d("json result = " + jsonResult.toString());
-        changePasswordResponseMessage = jsonResult['vosList'][0].toString();
+
+        final loginstatus = User.fromJson(jsonResult['loginuser']);
+        log.d('22 33311 changepassword' + jsonResult.toString());
+
+        if (jsonResult['status'] == 'LOG_IN_SUCCESS') {
+          log.d('inside Change Password LOG_IN_SUCCESS');
+
+          changePasswordResponseMessage = loginstatus.status.toString();
+        }
+        else {
+          log.d('Change Password Incorrect Credentials');
+          changePasswordResponseMessage = 'Incorrect Current UserID/Password';
+        }
       }
+      return changePasswordResponseMessage;
     } catch (e) {
       log.d(e);
     }
-    return changePasswordResponseMessage;
   }
 }

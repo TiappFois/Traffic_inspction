@@ -5,8 +5,9 @@ import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/model/SttnInspModels/sttnInspModel.dart';
 import 'package:provider/src/provider.dart';
 import 'package:ti/LanguageChangeProvider.dart';
+import 'package:ti/LanguageChangeProvider.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
-import 'package:ti/commonutils/navigation_menue.dart';
+import 'package:ti/commonutils/navigation_menu.dart';
 import 'package:ti/generated/l10n.dart';
 
 import 'package:ti/model/SttnInspModels/cautionOrdRegModel.dart';
@@ -127,7 +128,7 @@ class _SttnInspectionState extends State<SttnInspection> {
                           child: Container(
                               child: TextFormField(
                                 //controller: rmrkController,
-                                  inputFormatters: [
+                                      maxLength: 100,                                  inputFormatters: [
                                     FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                                   ],
                                   decoration: InputDecoration(

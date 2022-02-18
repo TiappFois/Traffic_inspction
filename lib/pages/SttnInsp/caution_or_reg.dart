@@ -19,7 +19,7 @@ import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/generated/l10n.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
-
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 class CautionOrdReg extends StatefulWidget {
   @override
   _CautionOrdRegState createState() => _CautionOrdRegState();
@@ -29,6 +29,11 @@ class CautionOrdReg extends StatefulWidget {
 
 class _CautionOrdRegState extends State<CautionOrdReg> {
 
+
+  stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = 'Press the button and start speaking';
+  double _confidence = 1.0;
   File imageFile = null ;
   List<String> selectedItemValue = [];
   List<bool> showText;
@@ -40,6 +45,7 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
   @override
   initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     getData();
   }
 
@@ -75,6 +81,10 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
 
         if (response.statusCode == 200) {
           print("Response200");
+
+                    for(var i = 0 ; i < jsonResult['ynList1'].length ; i++){
+            jsonResult['ynList1'][i] =  jsonResult['ynList1'][i] == '' ? 'SELECT' : jsonResult['ynList1'][i] ;
+          }
 
           showText =  await [jsonResult['ynList1'][0].toString() == 'NO' ? true : false,
                       jsonResult['ynList1'][1].toString() == 'NO' ? true : false];
@@ -122,11 +132,11 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
         showText = await [false, false];
 
         cautionOrdMod = await new CautionOrdRegModel(
-            SttnInspDtlsList.getCautionList(), ['YES', 'YES'],
+            SttnInspDtlsList.getCautionList(), ['SELECT', 'SELECT'],
             ['', ''],
             '');
-        selectedItemValue.add("YES");
-        selectedItemValue.add("YES");
+        selectedItemValue.add("SELECT");
+        selectedItemValue.add("SELECT");
 
         for (int i = 0; i < 2; i++) whyNocontroller.add(TextEditingController());
         whyNocontroller[0].text = '';
@@ -207,7 +217,20 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
 
         floatingActionButton: FloatingActionButton.extended(
 
-          onPressed: () async {
+            onPressed: () async {
+              int selectedCount = 0 ;
+              for(var i = 0 ; i < cautionOrdMod.ynList1.length ; i++){
+                if(cautionOrdMod.ynList1[i] != "SELECT"){
+                  selectedCount = 1 ;
+                }
+                else
+                  cautionOrdMod.ynList1[i] = '';
+
+              }
+              if(selectedCount == 0){
+                TiUtilities.showOKDialog(context, "Please Select Atleast One Option");
+              }
+              else{
 
             cautionOrdMod.inspID = TiUtilities.inspmstr.inspid;
 
@@ -236,7 +259,7 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
                 }
               });
             }
-          },
+          } },
           icon: Icon(Icons.save_outlined,
             color: Colors.teal,
           ),
@@ -273,15 +296,18 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
             );
           },
         ),
-        SizedBox(
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [  SizedBox(
           height: 2.0,
         ),
-        Padding(
+        Expanded(
+        child:  Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
               child: TextFormField(
                 controller: rmrkController,
-                inputFormatters: [
+                                      maxLength: 100,                inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z ]"))
                 ],
                 decoration: InputDecoration(
@@ -301,9 +327,14 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
                 onChanged: (val){
                   cautionOrdMod.rmrks1 = val;
                   //print('cautionOrdMod.rmrks1:' + cautionOrdMod.rmrks1);
-                }
-              )),
-        ),
+                })),
+        )),
+      new IconButton(
+          onPressed: _listen,
+          icon: Icon(_isListening ? Icons.mic : Icons.mic_none,
+              color: Colors.black)),
+    ],
+    ),
 
         SizedBox(height: 10.0),
         Center(
@@ -356,6 +387,30 @@ class _CautionOrdRegState extends State<CautionOrdReg> {
       ],
     );
 
+  }
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+            rmrkController.text = val.recognizedWords;
+            cautionOrdMod.rmrks1= rmrkController.text;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _confidence = val.confidence;
+            }
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
   }
 
   Future<String> _callSaveCautionOrdRegWebService(

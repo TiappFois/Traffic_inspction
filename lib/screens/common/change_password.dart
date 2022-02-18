@@ -7,6 +7,8 @@ import 'package:ti/commonutils/size_config.dart';
 import 'package:ti/screens/apphome_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../apphome.dart';
+
 class ChangePasswordForm extends StatefulWidget {
   const ChangePasswordForm({Key key}) : super(key: key);
 
@@ -327,13 +329,13 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
 
           log.d('avinesh--$changePasswordResponseMessage');
           if (changePasswordResponseMessage ==
-              'Password Updated Successfully.') {
+              'PASSWORD_CHANGE_SUCCESS') {
             TiUtilities.showOKDialog(context,
                     'Password Updated Successfully. Login with New Password.')
                 .then((res) {
               LoginBl.logOut().then((logOutResult) {
                 if (logOutResult == 'LOG_OUT_SUCCESS') {
-                  TiUtilities.pushPage(context, () => AppHomePageForm());
+                  TiUtilities.pushPage(context, () => AppHome());
                 } else {
                   Navigator.of(context).pushNamedAndRemoveUntil(
                       '/user_home', (Route<dynamic> route) => false);

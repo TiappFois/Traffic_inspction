@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:ti/commonutils/ti_utilities.dart';
 import 'package:ti/commonutils/logger.dart';
-import 'package:ti/commonutils/navigation_menue.dart';
+import 'package:ti/commonutils/navigation_menu.dart';
 import 'package:ti/commonutils/size_config.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info/package_info.dart';
